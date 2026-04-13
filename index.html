@@ -1,88 +1,22 @@
-https://qpfcyepmtaytyzimjont.supabase.co
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>WOS SvS Live Scheduler</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: #1e293b; border: 1px solid #384455; padding: 15px; border-radius: 10px; }
-        .time { font-size: 1.2rem; font-weight: bold; color: #fde047; }
-        .booked { border: 2px solid #ef4444; background: #450a0a; opacity: 0.9; }
-        input, select, button { width: 90%; margin-top: 8px; padding: 8px; border-radius: 5px; }
-        button { background: #22c55e; color: white; font-weight: bold; cursor: pointer; border: none; }
-        .admin-only { display: none; margin-top: 10px; background: #64748b; font-size: 10px; }
-    </style>
-</head>
-<body>
-    <h1>SvS Live Scheduler</h1>
-    <p id="status">Loading live data...</p>
-    <div class="grid" id="grid"></div>
+<script>
+    // 1. Declare these ONLY ONCE at the top
+    const SB_URL = "https://your-project-id.supabase.co";
+    const SB_KEY = "your-anon-key";
+    const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-    <script>
-        // --- CONFIGURATION ---
-        const SB_URL = "YOUR_SUPABASE_URL_HERE";
-        const SB_KEY = "YOUR_SUPABASE_KEY_HERE";
-       
-        const grid = document.getElementById('grid');
+    const grid = document.getElementById('grid');
 
-        // 1. Load data from Database
-        async function loadBookings() {
-            const { data, error } = await supabase.from('svs_bookings').select('*');
-            renderGrid(data || []);
-            document.getElementById('status').innerText = "Live Sync Active";
-        }
+    // 2. Then your functions...
+    async function loadBookings() {
+        // ... code ...
+    }
 
-        function renderGrid(bookedSlots) {
-            grid.innerHTML = '';
-            for (let h = 0; h < 24; h++) {
-                for (let m of ['00', '30']) {
-                    const t = `${h.toString().padStart(2, '0')}:${m}`;
-                    const booking = bookedSlots.find(b => b.time_id === t);
-                    
-                    const div = document.createElement('div');
-                    div.className = `card ${booking ? 'booked' : ''}`;
-                    
-                    if (booking) {
-                        div.innerHTML = `
-                            <div class="time">${t}</div>
-                            <div style="color:#fde047">${booking.task_type}</div>
-                            <div>${booking.chief_name}</div>
-                            <div style="font-size:12px; color:#94a3b8">[${booking.alliance_tag}]</div>
-                        `;
-                    } else {
-                        div.innerHTML = `
-                            <div class="time">${t}</div>
-                            <select id="type-${t}"><option>⚔️ Training</option><option>🧬 Research</option><option>🏗️ Building</option></select>
-                            <input type="text" id="name-${t}" placeholder="Chief Name">
-                            <input type="text" id="all-${t}" placeholder="Alliance">
-                            <button onclick="saveBooking('${t}')">Confirm</button>
-                        `;
-                    }
-                    grid.appendChild(div);
-                }
-            }
-        }
+    async function saveBooking(t) {
+        // ... code ...
+    }
 
-        async function saveBooking(t) {
-            const name = document.getElementById(`name-${t}`).value;
-            const all = document.getElementById(`all-${t}`).value;
-            const type = document.getElementById(`type-${t}`).value;
-
-            if(!name || !all) return alert("Fill all fields!");
-
-            const { error } = await supabase
-                .from('svs_bookings')
-                .insert([{ time_id: t, chief_name: name, alliance_tag: all, task_type: type }]);
-
-            if (error) alert("This slot was just taken! Refreshing...");
-            loadBookings();
-        }
-
-        loadBookings();
-    </script>
-</body>
-</html>
+    // 3. Then the start command
+    loadBookings();
+</script>
 
