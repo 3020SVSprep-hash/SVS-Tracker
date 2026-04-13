@@ -1,57 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>WOS SvS Scheduler</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3020 SvS Prep Hub</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 10px; }
-        .time { font-size: 1.2rem; font-weight: bold; color: #fde047; }
-        .booked { border: 2px solid #ef4444; background: #450a0a; }
-        input, select, button { width: 90%; margin-top: 8px; padding: 8px; border-radius: 5px; }
-        button { background: #22c55e; color: white; font-weight: bold; cursor: pointer; border: none; }
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #fde047;
+            --green: #22c55e;
+            --red: #ef4444;
+            --text: #f8fafc;
+        }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; text-align: center; margin: 0; padding: 10px; }
+        header { padding: 20px 10px; sticky: top; background: var(--bg); z-index: 100; border-bottom: 1px solid #334155; margin-bottom: 20px; }
+        h1 { margin: 0; font-size: 1.5rem; color: var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        
+        .controls { margin-top: 10px; display: flex; justify-content: center; gap: 10px; align-items: center; }
+        #status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--red); display: inline-block; }
+        .online { background: var(--green) !important; box-shadow: 0 0 8px var(--green); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; max-width: 1400px; margin: 0 auto; }
+        .card { background: var(--card); border: 1px solid #334155; padding: 15px; border-radius: 12px; position: relative; transition: transform 0.1s; }
+        .card:active { transform: scale(0.98); }
+        
+        .time { font-size: 1.4rem; font-weight: 800; color: var(--accent); margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+        
+        /* Booked Styles */
+        .booked { border: 2px solid var(--red); background: linear-gradient(145deg, #1e293b, #450a0a); }
+        .booked-type { color: var(--accent); font-weight: bold; font-size: 0.9rem; margin-top: 5px; }
+        .booked-name { font-size: 1.2rem; margin: 5px 0; font-weight: 600; }
+        .booked-alliance { color: #94a3b8; font-weight: bold; }
+
+        /* Form Styles */
+        select, input, button { width: 100%; margin-top: 8px; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; box-sizing: border-box; }
+        button { background: var(--green); color: white; font-weight: bold; cursor: pointer; border: none; margin-top: 15px; text-transform: uppercase; }
+        button:disabled { background: #475569; cursor: not-allowed; }
+        
+        .refresh-btn { background: #334155; width: auto; padding: 8px 15px; font-size: 0.8rem; margin: 0; }
     </style>
 </head>
 <body>
-    <h1>SvS Master Scheduler</h1>
-    <div id="status">Syncing...</div>
+
+    <header>
+        <h1>3020 SvS Prep Hub</h1>
+        <div class="controls">
+            <span id="status-dot"></span>
+            <span id="status-text">Connecting...</span>
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+        </div>
+    </header>
+
     <div class="grid" id="grid"></div>
 
     <script>
-        // We changed the name to "wosClient" to stop the "already declared" error
+        // --- CONFIGURATION ---
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
 
         async function loadData() {
-            const { data, error } = await wosClient.from('svs_bookings').select('*');
-            if (error) {
-                document.getElementById('status').innerText = "Check Table Name in Supabase!";
-                return;
+            const dot = document.getElementById('status-dot');
+            const status = document.getElementById('status-text');
+            
+            try {
+                const { data, error } = await wosClient.from('svs_bookings').select('*');
+                if (error) throw error;
+                
+                dot.classList.add('online');
+                status.innerText = "Live Sync Active";
+                render(data);
+            } catch (err) {
+                dot.classList.remove('online');
+                status.innerText = "Connection Lost";
+                console.error(err);
             }
-            render(data);
-            document.getElementById('status').innerText = "Live";
         }
 
         function render(list) {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
+            
             for (let h = 0; h < 24; h++) {
                 for (let m of ['00', '30']) {
                     const t = `${h.toString().padStart(2, '0')}:${m}`;
                     const b = list.find(x => x.time_id === t);
                     const div = document.createElement('div');
                     div.className = `card ${b ? 'booked' : ''}`;
+                    
                     if (b) {
-                        div.innerHTML = `<div class="time">${t}</div><div>${b.task_type}</div><div>${b.chief_name}</div><div style="font-size:12px">[${b.alliance_tag}]</div>`;
+                        div.innerHTML = `
+                            <div class="time">${t}</div>
+                            <div class="booked-type">🛡️ ${b.task_type}</div>
+                            <div class="booked-name">${b.chief_name}</div>
+                            <div class="booked-alliance">[${b.alliance_tag}]</div>
+                        `;
                     } else {
                         div.innerHTML = `
                             <div class="time">${t}</div>
-                            <select id="type-${t}"><option>⚔️ Training</option><option>🧬 Research</option><option>🏗️ Building</option></select>
-                            <input type="text" id="n-${t}" placeholder="Chief Name">
-                            <input type="text" id="a-${t}" placeholder="Alliance">
-                            <button onclick="book('${t}')">Confirm</button>`;
+                            <select id="type-${t}">
+                                <option value="Training">⚔️ Training</option>
+                                <option value="Research">🧬 Research</option>
+                                <option value="Building">🏗️ Building</option>
+                            </select>
+                            <input type="text" id="n-${t}" placeholder="Chief Name" autocomplete="off">
+                            <input type="text" id="a-${t}" placeholder="Alliance Tag" maxlength="4" autocomplete="off">
+                            <button id="btn-${t}" onclick="book('${t}')">Confirm Slot</button>
+                        `;
                     }
                     grid.appendChild(div);
                 }
@@ -59,15 +116,34 @@
         }
 
         async function book(t) {
-            const n = document.getElementById(`n-${t}`).value;
-            const a = document.getElementById(`a-${t}`).value;
+            const n = document.getElementById(`n-${t}`).value.trim();
+            const a = document.getElementById(`a-${t}`).value.trim();
             const type = document.getElementById(`type-${t}`).value;
-            if(!n || !a) return alert("Fill all boxes!");
+            const btn = document.getElementById(`btn-${t}`);
 
-            await wosClient.from('svs_bookings').insert([{ time_id: t, chief_name: n, alliance_tag: a, task_type: type }]);
+            if(!n || !a) {
+                alert("Please enter both Chief Name and Alliance Tag!");
+                return;
+            }
+
+            // UI Feedback
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+
+            const { error } = await wosClient.from('svs_bookings').insert([
+                { time_id: t, chief_name: n, alliance_tag: a, task_type: type }
+            ]);
+
+            if (error) {
+                alert("Conflict: This slot was just taken by someone else!");
+            }
+            
             loadData();
         }
 
+        // Auto-refresh every 60 seconds
+        setInterval(loadData, 60000);
+        
         loadData();
     </script>
 </body>
