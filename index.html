@@ -9,9 +9,10 @@
         body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
         .header-box { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; }
         h1 { color: #38bdf8; margin: 0 0 10px 0; }
-        #countdown { font-size: 1.5rem; color: #facc15; font-weight: bold; margin: 10px 0; border-y: 1px solid #334155; padding: 10px 0; }
-        .rules { font-size: 0.9rem; color: #94a3b8; line-height: 1.6; text-align: left; max-width: 600px; margin: 0 auto; }
+        #countdown { font-size: 1.5rem; color: #facc15; font-weight: bold; margin: 10px 0; border-top: 1px solid #334155; border-bottom: 1px solid #334155; padding: 10px 0; }
+        .rules { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; text-align: left; max-width: 650px; margin: 0 auto; }
         .highlight { color: #38bdf8; font-weight: bold; }
+        .important { color: #f87171; font-weight: bold; text-decoration: underline; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; }
         .time { font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
@@ -30,11 +31,12 @@
         <h1>🏆 3020 SvS Prep Scheduler</h1>
         <div id="countdown">Loading Countdown...</div>
         <div class="rules">
-            • <span class="highlight">IGN</span> = In-Game Username<br>
-            • <span class="highlight">Allowed Alliances:</span> DMN, PHX, ONE, TWO, PX2, ICE, EFX<br>
-            • <span class="highlight">Policy:</span> 1 Slot per Person. Major alliances take precedence.<br>
-            • <span class="highlight">External Players:</span> If your alliance isn't listed, contact <span style="color:white;">Ivy (DMN)</span> directly to request a slot.<br>
-            • For mistakes or cancellations, contact <span style="color:white;">Ivy (DMN)</span>.
+            • <span class="highlight">IGN</span> = Your In-Game Username<br>
+            • <span class="highlight">Alliances Allowed:</span> DMN, PHX, ONE, TWO, PX2, ICE, EFX<br>
+            • <span class="important">BOOKING RULES:</span> You can book <span style="color:white;">ONE</span> of each task. 
+              (1 Training slot <span style="color:white;">AND</span> 1 Research slot <span style="color:white;">AND</span> 1 Construction slot).<br>
+            • <span class="highlight">External Alliances:</span> If not listed, message <span style="color:white;">Ivy (DMN)</span> for a slot.<br>
+            • For mistakes or to change your time, contact <span style="color:white;">Ivy (DMN)</span>.
         </div>
     </div>
 
@@ -123,12 +125,12 @@
 
             if(!n || !a) return alert("Fill in IGN and Alliance!");
             if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
-                return alert("This scheduler is currently reserved for major alliances. Please contact Ivy (DMN) directly to request a slot!");
+                return alert("Your alliance isn't on the quick-book list yet. Please contact Ivy (DMN) for help!");
             }
 
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
             if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`You already have a ${taskLabel} slot booked!`);
+                return alert(`Wait! ${n} already has a ${taskLabel} slot. You can only have ONE per category.`);
             }
 
             const { error } = await wosClient.from('svs_bookings').insert([{ 
