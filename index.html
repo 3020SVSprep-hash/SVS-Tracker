@@ -27,10 +27,11 @@
     <div class="grid" id="grid"></div>
 
     <script>
-        // --- CONFIGURATION ---
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
+
+        const ALLOWED_ALLIANCES = ['DMN', 'PHX', 'ONE', 'TWO', 'PX2', 'ICE', 'EFX'];
 
         const tasks = [
             { label: '⚔️ Training', color: '#3b82f6' },
@@ -70,7 +71,7 @@
                         } else {
                             slot.innerHTML = `
                                 <div class="task-label" style="color:${task.color}">${task.label}</div>
-                                <input type="text" id="n-${slotId}" placeholder="Name">
+                                <input type="text" id="n-${slotId}" placeholder="In-Game Name">
                                 <input type="text" id="a-${slotId}" placeholder="Alliance">
                                 <button onclick="book('${time}', '${task.label}')">GO</button>
                                 <div class="clear"></div>
@@ -88,7 +89,11 @@
             const n = document.getElementById(`n-${slotId}`).value.trim();
             const a = document.getElementById(`a-${slotId}`).value.trim();
 
-            if(!n || !a) return alert("Please enter Name and Alliance!");
+            if(!n || !a) return alert("Please enter In-Game Username and Alliance!");
+
+            if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
+                return alert(`Access Denied! Only members of ${ALLOWED_ALLIANCES.join(', ')} can book slots.`);
+            }
 
             const { data: existingBookings } = await wosClient
                 .from('svs_bookings')
@@ -105,7 +110,7 @@
                 { 
                     time_id: time, 
                     chief_name: n, 
-                    alliance_tag: a, // Still sends to the same column in Supabase
+                    alliance_tag: a.toUpperCase(), 
                     task_type: taskLabel 
                 }
             ]);
