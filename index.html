@@ -4,21 +4,24 @@
     <title>WOS SvS Scheduler</title>
     <style>
         body { background: #0f172a; color: white; font-family: sans-serif; text-align: center; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: #1e293b; border: 1px solid #384455; padding: 15px; border-radius: 10px; }
-        .time { font-size: 1.2rem; font-weight: bold; color: #fde047; }
-        select, input, button { width: 100%; margin-top: 10px; padding: 8px; border-radius: 5px; border: none; }
-        button { background: #22c55e; color: white; font-weight: bold; cursor: pointer; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: #1e293b; border: 1px solid #384455; padding: 15px; border-radius: 10px; transition: 0.3s; }
+        .time { font-size: 1.2rem; font-weight: bold; color: #fde047; margin-bottom: 5px; }
+        select, input, button { width: 90%; margin-top: 8px; padding: 8px; border-radius: 5px; border: none; display: block; margin-left: auto; margin-right: auto; }
+        button { background: #22c55e; color: white; font-weight: bold; cursor: pointer; margin-top: 12px; }
         .booked { border: 2px solid #ef4444; background: #450a0a; }
+        .alliance-tag { color: #94a3b8; font-size: 0.85rem; font-weight: bold; }
     </style>
 </head>
 <body>
     <h1>SvS Training, Research & Building</h1>
-    <p>Select your task and enter your name to book a 30m slot.</p>
+    <p>Book your 30m slot. Don't forget your Alliance Tag!</p>
+    
     <div class="grid" id="grid"></div>
 
     <script>
         const grid = document.getElementById('grid');
+        // Generate slots 00:00 to 23:30
         for (let h = 0; h < 24; h++) {
             for (let m of ['00', '30']) {
                 const time = `${h.toString().padStart(2, '0')}:${m}`;
@@ -32,8 +35,9 @@
                         <option>🧬 Research</option>
                         <option>🏗️ Building</option>
                     </select>
-                    <input type="text" id="name-${time}" placeholder="Governor Name">
-                    <button onclick="book('${time}')">Confirm</button>
+                    <input type="text" id="name-${time}" placeholder="Chief Name">
+                    <input type="text" id="alliance-${time}" placeholder="Alliance [TAG]">
+                    <button onclick="book('${time}')">Confirm Slot</button>
                 `;
                 grid.appendChild(div);
             }
@@ -41,11 +45,25 @@
 
         function book(t) {
             const name = document.getElementById(`name-${t}`).value;
+            const alliance = document.getElementById(`alliance-${t}`).value;
             const type = document.getElementById(`type-${t}`).value;
-            if(!name) return alert("Enter name!");
+            
+            if(!name || !alliance) return alert("Please enter both Chief Name and Alliance Tag!");
+            
             const card = document.getElementById(`slot-${t}`);
             card.className = 'card booked';
-            card.innerHTML = `<div class="time">${t}</div><div style="color:#fde047">${type}</div><div>${name}</div>`;
+            card.innerHTML = `
+                <div class="time">${t}</div>
+                <div style="color:#fde047; font-weight:bold; margin-bottom:5px;">${type}</div>
+                <div style="font-size:1.1rem;">${name}</div>
+                <div class="alliance-tag">[${alliance}]</div>
+                <button onclick="cancel('${t}')" style="background:#ef4444; font-size:0.7rem; padding:4px;">Cancel</button>
+            `;
+        }
+
+        // Added a cancel function so you can fix mistakes!
+        function cancel(t) {
+            location.reload(); // Quickest way to reset a slot in this version
         }
     </script>
 </body>
