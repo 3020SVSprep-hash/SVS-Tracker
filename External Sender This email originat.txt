@@ -1,0 +1,158 @@
+External Sender: This email originated from outside of the PDI organization, proceed with caution.
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WOS SvS Master Scheduler</title>
+    <style>
+        :root {
+            --ice-blue: #e0f2fe;
+            --frost-dark: #0f172a;
+            --accent-gold: #fde047;
+            --training-color: #22c55e;
+            --research-color: #a855f7;
+            --building-color: #3b82f6;
+            --booked-red: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--frost-dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .slot-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(224, 242, 254, 0.3);
+            border-radius: 12px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        /* Dynamic colors based on task */
+        .slot-card.training { border-left: 8px solid var(--training-color); }
+        .slot-card.research { border-left: 8px solid var(--research-color); }
+        .slot-card.building { border-left: 8px solid var(--building-color); }
+
+        .time-label { font-weight: bold; font-size: 1.2rem; display: block; margin-bottom: 8px; }
+
+        select, input {
+            width: 90%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            border: none;
+        }
+
+        .booking-info {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-book { background-color: var(--ice-blue); color: var(--frost-dark); }
+        .btn-cancel { background-color: var(--booked-red); color: white; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <header style="text-align: center; margin-bottom: 40px;">
+        <h1>SvS Preparation Phase</h1>
+        <p>Book your Training, Research, or Building windows.</p>
+    </header>
+
+    <div class="grid-container" id="slotGrid"></div>
+
+    <script>
+        const slotGrid = document.getElementById('slotGrid');
+
+        function init() {
+            for (let hour = 0; hour < 24; hour++) {
+                for (let min of ['00', '30']) {
+                    const time = `${hour.toString().padStart(2, '0')}:${min}`;
+                    renderSlot(time);
+                }
+            }
+        }
+
+        function renderSlot(time) {
+            const div = document.createElement('div');
+            div.className = 'slot-card';
+            div.id = `card-${time}`;
+            div.innerHTML = `
+                <span class="time-label">${time}</span>
+                <div id="form-${time}">
+                    <select id="type-${time}">
+                        <option value="training">⚔️ Training</option>
+                        <option value="research">🧬 Research</option>
+                        <option value="building">🏗️ Building</option>
+                    </select>
+                    <input type="text" id="user-${time}" placeholder="Governor Name">
+                    <button class="btn-book" onclick="book('${time}')">Confirm Slot</button>
+                </div>
+                <div id="booked-${time}" class="booking-info">
+                    <strong id="display-type-${time}"></strong><br>
+                    <span id="display-user-${time}"></span>
+                    <button class="btn-cancel" onclick="cancel('${time}')">Cancel</button>
+                </div>
+            `;
+            slotGrid.appendChild(div);
+        }
+
+        function book(time) {
+            const type = document.getElementById(`type-${time}`).value;
+            const user = document.getElementById(`user-${time}`).value;
+            const card = document.getElementById(`card-${time}`);
+
+            if(!user) return alert("Enter your name!");
+
+            // Update UI
+            document.getElementById(`form-${time}`).style.display = 'none';
+            const info = document.getElementById(`booked-${time}`);
+            info.style.display = 'block';
+
+            document.getElementById(`display-type-${time}`).innerText = type.toUpperCase();
+            document.getElementById(`display-user-${time}`).innerText = `Governor: ${user}`;
+
+            card.classList.add(type);
+        }
+
+        function cancel(time) {
+            const card = document.getElementById(`card-${time}`);
+            card.classList.remove('training', 'research', 'building');
+            document.getElementById(`form-${time}`).style.display = 'block';
+            document.getElementById(`booked-${time}`).style.display = 'none';
+            document.getElementById(`user-${time}`).value = '';
+        }
+
+        init();
+    </script>
+</body>
+</html>
+
