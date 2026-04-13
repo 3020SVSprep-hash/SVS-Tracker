@@ -28,7 +28,6 @@
 
     <script>
         // --- CONFIGURATION ---
-        // Remember to put your real URL and KEY here
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
@@ -50,7 +49,6 @@
             grid.innerHTML = '';
             
             for (let h = 0; h < 24; h++) {
-                // CHANGED: Using 01 and 31 instead of 00 and 30
                 for (let m of ['01', '31']) {
                     const time = `${h.toString().padStart(2, '0')}:${m}`;
                     const card = document.createElement('div');
@@ -73,7 +71,7 @@
                             slot.innerHTML = `
                                 <div class="task-label" style="color:${task.color}">${task.label}</div>
                                 <input type="text" id="n-${slotId}" placeholder="Name">
-                                <input type="text" id="a-${slotId}" placeholder="Tag">
+                                <input type="text" id="a-${slotId}" placeholder="Alliance">
                                 <button onclick="book('${time}', '${task.label}')">GO</button>
                                 <div class="clear"></div>
                             `;
@@ -90,7 +88,7 @@
             const n = document.getElementById(`n-${slotId}`).value.trim();
             const a = document.getElementById(`a-${slotId}`).value.trim();
 
-            if(!n || !a) return alert("Please enter Name and Tag!");
+            if(!n || !a) return alert("Please enter Name and Alliance!");
 
             const { data: existingBookings } = await wosClient
                 .from('svs_bookings')
@@ -107,7 +105,7 @@
                 { 
                     time_id: time, 
                     chief_name: n, 
-                    alliance_tag: a, 
+                    alliance_tag: a, // Still sends to the same column in Supabase
                     task_type: taskLabel 
                 }
             ]);
