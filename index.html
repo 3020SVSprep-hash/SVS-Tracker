@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3020 SvS Scheduler</title>
+    <title>3020 SvS Prep Scheduler</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
-        h1 { text-align: center; color: #38bdf8; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
-        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; }
-        .time { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; border-bottom: 2px solid #38bdf8; }
-        .slot { margin: 10px 0; padding: 10px; border-radius: 8px; border: 1px solid #334155; }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .time { font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
+        .slot { margin: 8px 0; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #262f3f; transition: 0.3s; }
         .booked { background: #450a0a; border-color: #ef4444; }
-        input { padding: 5px; border-radius: 4px; border: 1px solid #334155; background: #0f172a; color: white; width: 35%; margin-right: 2px; font-size: 0.8rem; }
-        button { padding: 5px 10px; background: #38bdf8; border: none; border-radius: 4px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
-        .booked-name { font-weight: bold; color: white; }
-        .task-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        input { padding: 6px; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; width: 33%; margin-right: 4px; font-size: 0.85rem; }
+        button { padding: 6px 12px; background: #38bdf8; border: none; border-radius: 4px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 0.85rem; float: right; }
+        button:hover { background: #7dd3fc; }
+        .booked-name { font-weight: bold; color: white; font-size: 1rem; margin-top: 4px; }
+        .task-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+        .clear { clear: both; }
     </style>
 </head>
 <body>
@@ -25,31 +27,32 @@
     <div class="grid" id="grid"></div>
 
     <script>
-        // REPLACE THESE WITH YOUR ACTUAL DETAILS
+        // --- CONFIGURATION ---
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
 
+        const tasks = [
+            { label: '⚔️ Training', color: '#3b82f6' },
+            { label: '🧬 Research', color: '#a855f7' },
+            { label: '🏗️ Construction', color: '#f97316' }
+        ];
+
+        // --- LOAD DATA ---
         async function loadData() {
             const { data, error } = await wosClient.from('svs_bookings').select('*');
             if (error) console.error(error);
             render(data || []);
         }
 
+        // --- RENDER INTERFACE ---
         function render(list) {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             
-            const tasks = [
-                { label: '⚔️ Training', color: '#3b82f6' },
-                { label: '🧬 Research', color: '#a855f7' },
-                { label: '🏗️ Construction', color: '#f97316' }
-            ];
-
             for (let h = 0; h < 24; h++) {
                 for (let m of ['00', '30']) {
                     const time = `${h.toString().padStart(2, '0')}:${m}`;
-                    
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `<div class="time">${time}</div>`;
@@ -72,6 +75,7 @@
                                 <input type="text" id="n-${slotId}" placeholder="Name">
                                 <input type="text" id="a-${slotId}" placeholder="Tag">
                                 <button onclick="book('${time}', '${task.label}')">GO</button>
+                                <div class="clear"></div>
                             `;
                         }
                         card.appendChild(slot);
@@ -81,13 +85,27 @@
             }
         }
 
+        // --- BOOKING LOGIC WITH ANTI-HOGGING ---
         async function book(time, taskLabel) {
             const slotId = `${time}-${taskLabel}`;
             const n = document.getElementById(`n-${slotId}`).value.trim();
             const a = document.getElementById(`a-${slotId}`).value.trim();
 
-            if(!n || !a) return alert("Fill in both Name and Alliance Tag!");
+            if(!n || !a) return alert("Please enter your Name and Alliance Tag!");
 
+            // 1. Check if this person already has a slot for THIS specific task type
+            const { data: existingBookings } = await wosClient
+                .from('svs_bookings')
+                .select('chief_name')
+                .eq('task_type', taskLabel);
+
+            const alreadyHasTask = existingBookings.some(b => b.chief_name.toLowerCase() === n.toLowerCase());
+
+            if (alreadyHasTask) {
+                return alert(`Wait! ${n} already has a ${taskLabel} slot booked elsewhere. One per person to keep it fair!`);
+            }
+
+            // 2. If they are clear, proceed with booking
             const { error } = await wosClient.from('svs_bookings').insert([
                 { 
                     time_id: time, 
@@ -98,12 +116,14 @@
             ]);
 
             if (error) {
-                alert("Error booking slot. It might be taken!");
+                alert("Booking failed! Check your connection.");
                 console.error(error);
+            } else {
+                loadData(); // Refresh the grid
             }
-            loadData();
         }
 
+        // Initial Load
         loadData();
     </script>
 </body>
