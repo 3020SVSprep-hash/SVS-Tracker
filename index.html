@@ -8,26 +8,19 @@
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
         .header-box { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; }
-        
         h1 { color: #38bdf8; margin: 0 0 10px 0; font-size: 2rem; }
         #countdown { font-size: 1.5rem; color: #facc15; font-weight: bold; margin: 10px 0; border-top: 1px solid #334155; border-bottom: 1px solid #334155; padding: 10px 0; }
-        
         .rules { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; text-align: left; max-width: 650px; margin: 0 auto; }
         .highlight { color: #38bdf8; font-weight: bold; }
         .important { color: #f87171; font-weight: bold; text-decoration: underline; }
-        
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
         .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; }
-        /* Adjusted font size for the range */
         .time { font-size: 1.2rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
-        
         .slot { margin: 8px 0; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #262f3f; transition: 0.3s; }
         .booked { background: #450a0a; border-color: #ef4444; }
-        
         input { padding: 6px; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; width: 32%; margin-right: 4px; font-size: 0.85rem; }
         button { padding: 6px 12px; background: #38bdf8; border: none; border-radius: 4px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 0.85rem; float: right; }
         button:hover { background: #7dd3fc; }
-        
         .booked-name { font-weight: bold; color: white; font-size: 1rem; margin-top: 4px; }
         .task-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
         .clear { clear: both; }
@@ -83,19 +76,19 @@
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             for (let h = 0; h < 24; h++) {
-                // We show two slots per hour
+                const hourStr = h.toString().padStart(2, '0');
+                const nextHourStr = (h === 23 ? 0 : h + 1).toString().padStart(2, '0');
+
+                // Two Slots: :00 to :30 and :30 to :00
                 const windows = [
-                    { start: "01", end: "30", id: "01" },
-                    { start: "31", end: "00", id: "31" } // "00" indicates start of next hour
+                    { start: "00", end: "30", dbId: "00" },
+                    { start: "30", end: "00", dbId: "30", isNextHour: true }
                 ];
 
                 windows.forEach(w => {
-                    const hourStr = h.toString().padStart(2, '0');
-                    // Logic to show end time correctly (next hour if it's the 31-00 slot)
-                    const endHour = w.end === "00" ? (h + 1).toString().padStart(2, '0') : hourStr;
-                    
-                    const displayTime = `${hourStr}:${w.start} - ${endHour}:${w.end} UTC`;
-                    const dbTimeId = `${hourStr}:${w.id}`; // Keep DB ID consistent
+                    const endH = w.isNextHour ? nextHourStr : hourStr;
+                    const displayTime = `${hourStr}:${w.start} - ${endH}:${w.end} UTC`;
+                    const dbTimeId = `${hourStr}:${w.dbId}`; 
 
                     const card = document.createElement('div');
                     card.className = 'card';
