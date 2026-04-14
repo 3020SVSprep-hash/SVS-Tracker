@@ -8,6 +8,17 @@
     <style>
         body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
         .header-box { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; }
+        
+        /* Image Style to make the banner fit nicely */
+        .banner-img { 
+            width: 100%; 
+            max-width: 450px; /* Slightly larger for the detailed art */
+            border-radius: 10px; 
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 2px solid #38bdf8;
+        }
+
         h1 { color: #38bdf8; margin: 0 0 10px 0; }
         #countdown { font-size: 1.5rem; color: #facc15; font-weight: bold; margin: 10px 0; border-top: 1px solid #334155; border-bottom: 1px solid #334155; padding: 10px 0; }
         .rules { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; text-align: left; max-width: 650px; margin: 0 auto; }
@@ -28,14 +39,14 @@
 <body>
 
     <div class="header-box">
+        <img src="https://i.ibb.co/589j5d4/image-1.png" alt="SVS Prep Time" class="banner-img">
+        
         <h1>🏆 3020 SvS Prep Scheduler</h1>
         <div id="countdown">Loading Countdown...</div>
         <div class="rules">
             • <span class="highlight">IGN</span> = Your In-Game Username<br>
-            • <span class="highlight">Alliances Allowed:</span> DMN, PHX, ONE, TWO, PX2, ICE, EFX<br>
-            • <span class="important">BOOKING RULES:</span> You can book <span style="color:white;">ONE</span> of each task. 
-              (1 Training slot <span style="color:white;">AND</span> 1 Research slot <span style="color:white;">AND</span> 1 Construction slot).<br>
-            • <span class="highlight">External Alliances:</span> If not listed, message <span style="color:white;">Ivy (DMN)</span> for a slot.<br>
+            • <span class="important">BOOKING RULES:</span> You can book <span style="color:white;">ONE</span> of each task (1 Training, 1 Research, 1 Construction).<br>
+            • <span class="highlight">Help:</span> If anyone has difficulty booking a slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.<br>
             • For mistakes or to change your time, contact <span style="color:white;">Ivy (DMN)</span>.
         </div>
     </div>
@@ -43,11 +54,13 @@
     <div class="grid" id="grid"></div>
 
     <script>
+        // --- CONFIGURATION ---
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
 
-        const ALLOWED_ALLIANCES = ['DMN', 'PHX', 'ONE', 'TWO', 'PX2', 'ICE', 'EFX'];
+        const ALLOWED_ALLIANCES = ['DMN', 'PHX', 'ONE', 'TWO', 'PX2', 'ICE', 'EFX', 'HTR', 'CAT', 'SVS'];
+
         const tasks = [
             { label: '⚔️ Training', color: '#3b82f6' },
             { label: '🧬 Research', color: '#a855f7' },
@@ -125,12 +138,12 @@
 
             if(!n || !a) return alert("Fill in IGN and Alliance!");
             if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
-                return alert("Your alliance isn't on the quick-book list yet. Please contact Ivy (DMN) for help!");
+                return alert("Access Restricted. If you have difficulty booking, please reach out to Ivy (DMN)!");
             }
 
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
             if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`Wait! ${n} already has a ${taskLabel} slot. You can only have ONE per category.`);
+                return alert(`Wait! ${n} already has a ${taskLabel} slot booked.`);
             }
 
             const { error } = await wosClient.from('svs_bookings').insert([{ 
