@@ -17,8 +17,9 @@
         .important { color: #f87171; font-weight: bold; text-decoration: underline; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .time { font-size: 1.5rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
+        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; }
+        /* Adjusted font size for the range */
+        .time { font-size: 1.2rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
         
         .slot { margin: 8px 0; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #262f3f; transition: 0.3s; }
         .booked { background: #450a0a; border-color: #ef4444; }
@@ -38,23 +39,21 @@
         <h1>🏆 3020 SvS Prep Scheduler</h1>
         <div id="countdown">Loading Countdown...</div>
         <div class="rules">
+            • <span class="highlight">All Times are in UTC</span><br>
             • <span class="highlight">IGN</span> = Your In-Game Username<br>
             • <span class="important">BOOKING RULES:</span> You can book <span style="color:white;">ONE</span> of each task (1 Training, 1 Research, 1 Construction).<br>
-            • <span class="highlight">Help:</span> If anyone has difficulty booking a slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.<br>
-            • For mistakes or to change your time, contact <span style="color:white;">Ivy (DMN)</span>.
+            • <span class="highlight">Help:</span> If anyone has difficulty booking a slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.
         </div>
     </div>
 
-    <div class="grid" id="grid"></div>
+    <div id="grid" class="grid"></div>
 
     <script>
-        // --- CONFIGURATION ---
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
 
         const ALLOWED_ALLIANCES = ['DMN', 'PHX', 'ONE', 'TWO', 'PX2', 'ICE', 'EFX', 'HTR', 'CAT', 'SVS'];
-
         const tasks = [
             { label: '⚔️ Training', color: '#3b82f6' },
             { label: '🧬 Research', color: '#a855f7' },
@@ -65,19 +64,12 @@
             const target = new Date("2026-04-20T00:00:00Z").getTime();
             const now = new Date().getTime();
             const diff = target - now;
-
-            if (diff <= 0) {
-                document.getElementById("countdown").innerHTML = "🚀 SVS PREP IS LIVE!";
-                return;
-            }
-
+            if (diff <= 0) { document.getElementById("countdown").innerHTML = "🚀 SVS PREP IS LIVE!"; return; }
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-            document.getElementById("countdown").innerHTML = 
-                `Starts in: ${days}d ${hours}h ${mins}m ${secs}s`;
+            document.getElementById("countdown").innerHTML = `Starts in: ${days}d ${hours}h ${mins}m ${secs}s`;
         }
         setInterval(updateCountdown, 1000);
 
@@ -85,23 +77,33 @@
             const { data, error } = await wosClient.from('svs_bookings').select('*');
             if (!error) render(data || []);
         }
-
-        // Refresh data every 30 seconds automatically
         setInterval(loadData, 30000);
 
         function render(list) {
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             for (let h = 0; h < 24; h++) {
-                for (let m of ['01', '31']) {
-                    const time = `${h.toString().padStart(2, '0')}:${m}`;
+                // We show two slots per hour
+                const windows = [
+                    { start: "01", end: "30", id: "01" },
+                    { start: "31", end: "00", id: "31" } // "00" indicates start of next hour
+                ];
+
+                windows.forEach(w => {
+                    const hourStr = h.toString().padStart(2, '0');
+                    // Logic to show end time correctly (next hour if it's the 31-00 slot)
+                    const endHour = w.end === "00" ? (h + 1).toString().padStart(2, '0') : hourStr;
+                    
+                    const displayTime = `${hourStr}:${w.start} - ${endHour}:${w.end} UTC`;
+                    const dbTimeId = `${hourStr}:${w.id}`; // Keep DB ID consistent
+
                     const card = document.createElement('div');
                     card.className = 'card';
-                    card.innerHTML = `<div class="time">${time}</div>`;
+                    card.innerHTML = `<div class="time">${displayTime}</div>`;
 
                     tasks.forEach(task => {
-                        const slotId = `${time}-${task.label}`;
-                        const booking = list.find(x => x.time_id === time && x.task_type === task.label);
+                        const slotId = `${dbTimeId}-${task.label}`;
+                        const booking = list.find(x => x.time_id === dbTimeId && x.task_type === task.label);
                         const slot = document.createElement('div');
                         slot.className = `slot ${booking ? 'booked' : ''}`;
 
@@ -115,14 +117,14 @@
                                 <div class="task-label" style="color:${task.color}">${task.label}</div>
                                 <input type="text" id="n-${slotId}" placeholder="IGN">
                                 <input type="text" id="a-${slotId}" placeholder="Alliance">
-                                <button onclick="book('${time}', '${task.label}')">GO</button>
+                                <button onclick="book('${dbTimeId}', '${task.label}')">GO</button>
                                 <div class="clear"></div>
                             `;
                         }
                         card.appendChild(slot);
                     });
                     grid.appendChild(card);
-                }
+                });
             }
         }
 
@@ -130,21 +132,17 @@
             const slotId = `${time}-${taskLabel}`;
             const n = document.getElementById(`n-${slotId}`).value.trim();
             const a = document.getElementById(`a-${slotId}`).value.trim();
-
-            if(!n || !a) return alert("Please fill in IGN and Alliance!");
+            if(!n || !a) return alert("Fill in IGN and Alliance!");
             if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
-                return alert("Access Restricted. If you have difficulty booking, please reach out to Ivy (DMN)!");
+                return alert("Access Restricted. Reach out to Ivy (DMN) for help!");
             }
-
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
             if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`Wait! ${n} already has a ${taskLabel} slot booked.`);
+                return alert(`Wait! ${n} already has a ${taskLabel} slot.`);
             }
-
             const { error } = await wosClient.from('svs_bookings').insert([{ 
                 time_id: time, chief_name: n, alliance_tag: a.toUpperCase(), task_type: taskLabel 
             }]);
-
             if (error) alert("Booking failed!");
             else loadData();
         }
