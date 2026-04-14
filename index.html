@@ -42,7 +42,7 @@
 <body>
 
     <div class="header-box">
-        <img src="https://raw.githubusercontent.com/696d67/assets/main/svsprep.png" alt="SVS Prep Time" class="banner-img">
+        <img src="https://images2.imgbox.com/6c/9b/yW80oW6V_o.png" alt="SVS Prep Time" class="banner-img">
         
         <h1>🏆 3020 SvS Prep Scheduler</h1>
         <div id="countdown">Loading Countdown...</div>
@@ -58,12 +58,10 @@
 
     <script>
         // --- CONFIGURATION ---
-        // REPLACE THESE WITH YOUR ACTUAL SUPABASE DETAILS
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
 
-        // Allowed Alliances (includes hidden ones like HTR, CAT, SVS)
         const ALLOWED_ALLIANCES = ['DMN', 'PHX', 'ONE', 'TWO', 'PX2', 'ICE', 'EFX', 'HTR', 'CAT', 'SVS'];
 
         const tasks = [
@@ -72,7 +70,6 @@
             { label: '🏗️ Construction', color: '#f97316' }
         ];
 
-        // Countdown Timer Logic
         function updateCountdown() {
             const target = new Date("2026-04-20T00:00:00Z").getTime();
             const now = new Date().getTime();
@@ -93,13 +90,11 @@
         }
         setInterval(updateCountdown, 1000);
 
-        // Fetch data from Supabase
         async function loadData() {
             const { data, error } = await wosClient.from('svs_bookings').select('*');
             if (!error) render(data || []);
         }
 
-        // Auto-refresh data every 30 seconds
         setInterval(loadData, 30000);
 
         function render(list) {
@@ -145,32 +140,23 @@
             const a = document.getElementById(`a-${slotId}`).value.trim();
 
             if(!n || !a) return alert("Please fill in IGN and Alliance!");
-            
-            // Validate Alliance Tag
             if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
                 return alert("Access Restricted. If you have difficulty booking, please reach out to Ivy (DMN)!");
             }
 
-            // Check for duplicate bookings (Max 1 per category)
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
             if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`Wait! ${n} already has a ${taskLabel} slot booked. You can only have one per category!`);
+                return alert(`Wait! ${n} already has a ${taskLabel} slot booked.`);
             }
 
-            // Insert into Supabase
             const { error } = await wosClient.from('svs_bookings').insert([{ 
                 time_id: time, chief_name: n, alliance_tag: a.toUpperCase(), task_type: taskLabel 
             }]);
 
-            if (error) {
-                alert("Booking failed! Check your connection.");
-                console.error(error);
-            } else {
-                loadData();
-            }
+            if (error) alert("Booking failed!");
+            else loadData();
         }
 
-        // Initial Load
         loadData();
         updateCountdown();
     </script>
