@@ -6,23 +6,140 @@
     <title>3020 SvS Prep Scheduler</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .header-box { background: #1e293b; border: 2px solid #38bdf8; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 30px; }
-        h1 { color: #38bdf8; margin: 0 0 10px 0; font-size: 2rem; }
-        #countdown { font-size: 1.5rem; color: #facc15; font-weight: bold; margin: 10px 0; border-top: 1px solid #334155; border-bottom: 1px solid #334155; padding: 10px 0; }
-        .rules { font-size: 0.95rem; color: #94a3b8; line-height: 1.6; text-align: left; max-width: 650px; margin: 0 auto; }
+        /* Base Styling */
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: radial-gradient(circle at top, #1e293b 0%, #0f172a 100%); 
+            color: white; 
+            padding: 20px; 
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        /* Animated Header Box */
+        .header-box { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(10px);
+            border: 1px solid #38bdf8; 
+            padding: 30px; 
+            border-radius: 20px; 
+            text-align: center; 
+            margin-bottom: 40px; 
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        h1 { 
+            color: #38bdf8; 
+            margin: 0 0 10px 0; 
+            font-size: 2.2rem; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Pulsing Countdown */
+        #countdown { 
+            font-size: 1.6rem; 
+            color: #facc15; 
+            font-weight: 800; 
+            margin: 15px 0; 
+            padding: 15px 0;
+            border-top: 1px solid rgba(56, 189, 248, 0.3);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .rules { font-size: 0.95rem; color: #cbd5e1; line-height: 1.8; text-align: left; max-width: 650px; margin: 0 auto; }
         .highlight { color: #38bdf8; font-weight: bold; }
-        .important { color: #f87171; font-weight: bold; text-decoration: underline; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-        .card { background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; }
-        .time { font-size: 1.2rem; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #38bdf8; padding-bottom: 5px; color: #facc15; }
-        .slot { margin: 8px 0; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #262f3f; transition: 0.3s; }
-        .booked { background: #450a0a; border-color: #ef4444; }
-        input { padding: 6px; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; width: 32%; margin-right: 4px; font-size: 0.85rem; }
-        button { padding: 6px 12px; background: #38bdf8; border: none; border-radius: 4px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 0.85rem; float: right; }
-        button:hover { background: #7dd3fc; }
-        .booked-status { font-weight: bold; color: #f87171; font-size: 1rem; margin-top: 4px; letter-spacing: 1.5px; text-transform: uppercase; }
-        .task-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
+        .important { color: #f87171; font-weight: bold; }
+
+        /* Grid & Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        
+        .card { 
+            background: #1e293b; 
+            border: 1px solid #334155; 
+            padding: 20px; 
+            border-radius: 16px; 
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+            border-color: #38bdf8; 
+        }
+
+        .time { 
+            font-size: 1.25rem; 
+            font-weight: 800; 
+            margin-bottom: 15px; 
+            border-left: 4px solid #38bdf8; 
+            padding-left: 10px; 
+            color: #facc15; 
+        }
+
+        /* Slot Styling */
+        .slot { 
+            margin: 10px 0; 
+            padding: 14px; 
+            border-radius: 10px; 
+            border: 1px solid #334155; 
+            background: rgba(15, 23, 42, 0.5); 
+            transition: all 0.3s; 
+        }
+
+        .booked { 
+            background: rgba(69, 10, 10, 0.4); 
+            border-color: #ef4444; 
+            box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2);
+        }
+
+        /* Inputs & Buttons */
+        input { 
+            padding: 8px; 
+            border-radius: 6px; 
+            border: 1px solid #475569; 
+            background: #0f172a; 
+            color: white; 
+            width: 32%; 
+            margin-right: 4px; 
+            font-size: 0.8rem;
+        }
+        input:focus { border-color: #38bdf8; outline: none; }
+
+        button { 
+            padding: 8px 15px; 
+            background: #38bdf8; 
+            border: none; 
+            border-radius: 6px; 
+            color: #0f172a; 
+            font-weight: 900; 
+            cursor: pointer; 
+            font-size: 0.8rem; 
+            float: right;
+            text-transform: uppercase;
+        }
+        button:hover { background: #7dd3fc; box-shadow: 0 0 10px #38bdf8; }
+
+        .booked-status { 
+            font-weight: 800; 
+            color: #f87171; 
+            font-size: 1rem; 
+            margin-top: 5px; 
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+        }
+        .booked-status::before { content: '●'; margin-right: 8px; animation: blink 1s infinite; }
+
+        @keyframes blink { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+
+        .task-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 900; letter-spacing: 1.5px; margin-bottom: 8px; }
         .clear { clear: both; }
     </style>
 </head>
@@ -32,9 +149,9 @@
         <h1>🏆 3020 SvS Prep Scheduler</h1>
         <div id="countdown">Loading Countdown...</div>
         <div class="rules">
-            • <span class="highlight">All Times are in UTC</span><br>
-            • <span class="highlight">Booking Rules:</span> One slot per category (Training, Research, Construction).<br>
-            • <span class="important">Help/Changes:</span> If anyone has difficulty booking a slot, or needs to change their slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.
+            • <span class="highlight">UTC FORMAT</span> • Please ensure your game clock matches.<br>
+            • <span class="highlight">LIMIT:</span> One slot per category (Training, Research, Construction).<br>
+            • <span class="important">HELP:</span> Difficulty booking or need to change? Contact <span style="color:white; text-decoration:underline;">Ivy (DMN)</span>.
         </div>
     </div>
 
@@ -61,7 +178,7 @@
             const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
             const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
             const secs = Math.floor((diff % (1000 * 60)) / 1000);
-            document.getElementById("countdown").innerHTML = `Starts in: ${days}d ${hours}h ${mins}m ${secs}s`;
+            document.getElementById("countdown").innerHTML = `STARTS IN: ${days}D ${hours}H ${mins}M ${secs}S`;
         }
         setInterval(updateCountdown, 1000);
 
@@ -77,17 +194,12 @@
             for (let h = 0; h < 24; h++) {
                 const hourStr = h.toString().padStart(2, '0');
                 const nextHourStr = (h === 23 ? 0 : h + 1).toString().padStart(2, '0');
-
-                const windows = [
-                    { start: "00", end: "30", dbId: "00" },
-                    { start: "30", end: "00", dbId: "30", isNextHour: true }
-                ];
+                const windows = [{ start: "00", end: "30", id: "00" }, { start: "30", end: "00", id: "30", next: true }];
 
                 windows.forEach(w => {
-                    const endH = w.isNextHour ? nextHourStr : hourStr;
+                    const endH = w.next ? nextHourStr : hourStr;
                     const displayTime = `${hourStr}:${w.start} - ${endH}:${w.end} UTC`;
-                    const dbTimeId = `${hourStr}:${w.dbId}`; 
-
+                    const dbTimeId = `${hourStr}:${w.id}`; 
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `<div class="time">${displayTime}</div>`;
@@ -99,19 +211,14 @@
                         slot.className = `slot ${booking ? 'booked' : ''}`;
 
                         if (booking) {
-                            // Publicly shows ONLY "BOOKED"
-                            slot.innerHTML = `
-                                <div class="task-label" style="color:${task.color}">${task.label}</div>
-                                <div class="booked-status">BOOKED</div>
-                            `;
+                            slot.innerHTML = `<div class="task-label" style="color:${task.color}">${task.label}</div><div class="booked-status">BOOKED</div>`;
                         } else {
                             slot.innerHTML = `
                                 <div class="task-label" style="color:${task.color}">${task.label}</div>
                                 <input type="text" id="n-${slotId}" placeholder="IGN">
                                 <input type="text" id="a-${slotId}" placeholder="Alliance">
                                 <button onclick="book('${dbTimeId}', '${task.label}')">GO</button>
-                                <div class="clear"></div>
-                            `;
+                                <div class="clear"></div>`;
                         }
                         card.appendChild(slot);
                     });
@@ -124,20 +231,12 @@
             const slotId = `${time}-${taskLabel}`;
             const n = document.getElementById(`n-${slotId}`).value.trim();
             const a = document.getElementById(`a-${slotId}`).value.trim();
-            if(!n || !a) return alert("Fill in IGN and Alliance!");
-            if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) {
-                return alert("Access Restricted. Reach out to Ivy (DMN) for help!");
-            }
+            if(!n || !a) return alert("Please fill in IGN and Alliance!");
+            if (!ALLOWED_ALLIANCES.includes(a.toUpperCase())) return alert("Access Restricted. Contact Ivy (DMN)!");
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
-            if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`Wait! ${n} already has a ${taskLabel} slot booked.`);
-            }
-            // All data is still saved to your database
-            const { error } = await wosClient.from('svs_bookings').insert([{ 
-                time_id: time, chief_name: n, alliance_tag: a.toUpperCase(), task_type: taskLabel 
-            }]);
-            if (error) alert("Booking failed!");
-            else loadData();
+            if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) return alert(`Wait! ${n} already has a ${taskLabel} slot.`);
+            const { error } = await wosClient.from('svs_bookings').insert([{ time_id: time, chief_name: n, alliance_tag: a.toUpperCase(), task_type: taskLabel }]);
+            if (error) alert("Booking failed!"); else loadData();
         }
 
         loadData();
