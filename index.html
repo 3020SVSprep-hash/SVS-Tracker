@@ -21,7 +21,8 @@
         input { padding: 6px; border-radius: 4px; border: 1px solid #475569; background: #0f172a; color: white; width: 32%; margin-right: 4px; font-size: 0.85rem; }
         button { padding: 6px 12px; background: #38bdf8; border: none; border-radius: 4px; color: #0f172a; font-weight: bold; cursor: pointer; font-size: 0.85rem; float: right; }
         button:hover { background: #7dd3fc; }
-        .booked-name { font-weight: bold; color: white; font-size: 1rem; margin-top: 4px; }
+        .booked-status { font-weight: bold; color: #f87171; font-size: 1rem; margin-top: 4px; letter-spacing: 1px; }
+        .alliance-label { color: #94a3b8; font-size: 0.85rem; }
         .task-label { font-size: 0.75rem; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 6px; }
         .clear { clear: both; }
     </style>
@@ -33,15 +34,15 @@
         <div id="countdown">Loading Countdown...</div>
         <div class="rules">
             • <span class="highlight">All Times are in UTC</span><br>
-            • <span class="highlight">IGN</span> = Your In-Game Username<br>
-            • <span class="important">BOOKING RULES:</span> You can book <span style="color:white;">ONE</span> of each task (1 Training, 1 Research, 1 Construction).<br>
-            • <span class="highlight">Help:</span> If anyone has difficulty booking a slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.
+            • <span class="highlight">Booking Rules:</span> One slot per category (Training, Research, Construction).<br>
+            • <span class="important">Help/Changes:</span> If anyone has difficulty booking a slot, or needs to change their slot, please reach out to <span style="color:white;">Ivy (DMN)</span>.
         </div>
     </div>
 
     <div id="grid" class="grid"></div>
 
     <script>
+        // REPLACE THESE WITH YOUR ACTUAL SUPABASE DETAILS
         const WOS_URL = "https://qpfcyepmtaytyzimjont.supabase.co";
         const WOS_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwZmN5ZXBtdGF5dHl6aW1qb250Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjYyMTMsImV4cCI6MjA5MTY0MjIxM30.OnQ_JvbV-DvY-6PvLc9649Oo6bAuS8YE_WUk6bkVi_E";
         const wosClient = window.supabase.createClient(WOS_URL, WOS_KEY);
@@ -79,7 +80,6 @@
                 const hourStr = h.toString().padStart(2, '0');
                 const nextHourStr = (h === 23 ? 0 : h + 1).toString().padStart(2, '0');
 
-                // Two Slots: :00 to :30 and :30 to :00
                 const windows = [
                     { start: "00", end: "30", dbId: "00" },
                     { start: "30", end: "00", dbId: "30", isNextHour: true }
@@ -103,7 +103,7 @@
                         if (booking) {
                             slot.innerHTML = `
                                 <div class="task-label" style="color:${task.color}">${task.label}</div>
-                                <div class="booked-name">${booking.chief_name} [${booking.alliance_tag}]</div>
+                                <div class="booked-status">BOOKED <span class="alliance-label">[${booking.alliance_tag}]</span></div>
                             `;
                         } else {
                             slot.innerHTML = `
@@ -131,7 +131,7 @@
             }
             const { data: existing } = await wosClient.from('svs_bookings').select('chief_name').eq('task_type', taskLabel);
             if (existing.some(b => b.chief_name.toLowerCase() === n.toLowerCase())) {
-                return alert(`Wait! ${n} already has a ${taskLabel} slot.`);
+                return alert(`Wait! ${n} already has a ${taskLabel} slot booked.`);
             }
             const { error } = await wosClient.from('svs_bookings').insert([{ 
                 time_id: time, chief_name: n, alliance_tag: a.toUpperCase(), task_type: taskLabel 
